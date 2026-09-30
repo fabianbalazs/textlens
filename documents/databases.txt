@@ -1,0 +1,3 @@
+A database stores data in an organized way. Relational databases use tables and SQL queries.
+Databases make it possible to search, update and protect large amounts of data.
+Good database design keeps data consistent.

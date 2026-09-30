@@ -1,0 +1,3 @@
+Machine learning is a field of computer science. In machine learning, a model learns patterns from data.
+Learning algorithms improve with more data. Python is often used for machine learning projects.
+A trained machine learning model can make predictions on new data.
