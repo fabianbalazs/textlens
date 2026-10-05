@@ -1,1 +1,6 @@
 scikit-learn
+huggingface_hub
+pandas
+scikit-learn
+nltk
+tensorflow
