@@ -1,3 +1,0 @@
-Web development is the work of building websites and web applications.
-A web developer uses HTML, CSS and JavaScript. The server handles requests and returns pages.
-Python is also used on the server side of many web projects.

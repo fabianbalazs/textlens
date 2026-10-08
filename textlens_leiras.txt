@@ -1,0 +1,60 @@
+TextLens: FIFA vb 2022 tweetek szentiment elemzése – projektleírás
+
+Mi a projekt célja és mire jó?
+A projekt célja a szentiment elemzés (véleménybányászat) bemutatása. Ez egy olyan eljárás, amellyel automatikusan meg tudjuk határozni egy szövegről, hogy pozitív vagy negatív hangvételű-e. Mi a FIFA világbajnokság 2022 első napján írt tweeteken dolgozunk.
+
+A gyakorlatban ez azért hasznos, mert a sportcsapatok, szponzorok és médiamárkák így automatikusan nyomon követhetik a közönség hangulatát egy meccs vagy esemény alatt, anélkül, hogy embereknek kellene kézzel végigolvasniuk több tízezer posztot.
+
+A projekt lépésről lépésre:
+
+1. Adatok betöltése (Data Loading)
+Mi történik? Beolvassuk a Hugging Face-en elérhető Tirendaz/fifa-world-cup-2022-tweets adathalmazt (kb. 30 000 tweet a #WorldCup2022 hashtaggel). Az eredeti adat három osztályt tartalmaz (pozitív, semleges, negatív). Mi csak a pozitív és negatív tweeteket tartjuk meg, hogy bináris osztályozási feladatunk legyen, és töröljük a duplikátumokat (retweeteket).
+Miért fontos? Címkézett adatok nélkül nem tudnánk felügyelt gépi tanulási (supervised learning) modellt tanítani. A duplikátumok törlése azért kell, hogy ugyanaz a tweet ne kerülhessen a tanító és a teszt halmazba is.
+Fontos: a címkéket nem emberek adták, hanem egy előre betanított modell (cardiffnlp RoBERTa), ezért a mi modellünk valójában ennek a modellnek a viselkedését tanulja meg.
+
+2. Szövegek tisztítása és előfeldolgozása (Text Preprocessing)
+A tweetek különösen zajosak, ezért a következő lépéseken megyünk keresztül:
+
+Kisbetűsítés: eltünteti a kis- és nagybetűk közötti különbséget.
+HTML entitások és címkék törlése: pl. az &amp; jel kezelése.
+URL-ek és @említések törlése: a linkek és felhasználónevek nem hordoznak szentimentet.
+Rövidítések kibontása: a "don't"-ból "do not" lesz. Ezt az írásjelek törlése előtt végezzük, különben az aposztróf elveszne.
+Speciális karakterek eltávolítása: csak a betűk maradnak (a hashtagből a # jel tűnik el, a szó marad).
+Felesleges szóközök törlése.
+Stop szavak eltávolítása: kivesszük a nagyon gyakori, de jelentéssel alig bíró szavakat (pl. "the", "is"). A tagadó szavakat (no, nor, not) megtartjuk, mert megfordítják a jelentést ("not good").
+Lemmatizálás: a szavakat alapalakra hozzuk (pl. "running" -> "run", "thought" -> "think"). Először igei, majd főnévi alakra lemmatizálunk, hogy ezek a példák valóban működjenek.
+
+3. Adatok felosztása (Train, Validation, Test Split)
+Az adatokat három részre osztottuk:
+Tanító halmaz (Train - 80%): ezen tanul a modell.
+Validációs halmaz (Val - 10%): ezen ellenőrizzük a modellt tanulás közben a túltanulás elkerülésére.
+Teszt halmaz (Test - 10%): ezen mérjük le a kész modell végső teljesítményét.
+A felosztás rétegzett (stratify), így a pozitív és negatív arány mindegyik részben megegyezik az eredetivel. Ez az arány itt nem 50-50%, mert a tweeteknél az osztályok nem kiegyensúlyozottak, ezért a pontosság mellett más mérőszámokat is nézünk.
+
+4. Jellemzők kinyerése / Számszerűsítés (Feature Extraction)
+A gépi tanulási modellek csak számokkal tudnak dolgozni. Két módszert alkalmaztunk:
+
+CountVectorizer: megszámolja, hányszor szerepelnek az egyes szavak az adott tweetben.
+TF-IDF Vectorizer: nem csak a gyakoriságot nézi, hanem bünteti azokat a szavakat, amelyek szinte minden tweetben ott vannak, így kiemeli az egyedibb, fontosabb szavakat.
+A vektorizálókat csak a tanító halmazra illesztjük, a validációs és teszt halmazt ezzel alakítjuk át, így nem szivárog be információ a teszt halmazból.
+
+5. Modell építés és tanítás (Model Training)
+TensorFlow és Keras segítségével egyszerű neurális hálózatokat hoztunk létre:
+- model_cv: egyetlen sigmoid neuron a CountVectorizer jellemzőkön.
+- model_tfidf: egyetlen sigmoid neuron a TF-IDF jellemzőkön.
+- model_cv_hidden: mint a model_cv, de egy plusz rejtett Dense réteggel (10 neuron, ReLU) a nemlineáris összefüggések hatékonyabb tanulásához.
+A kimeneten a sigmoid aktivációs függvény dönti el, hogy a vélemény pozitív (1-hez közeli érték) vagy negatív (0-hoz közeli érték) hangvételű.
+
+6. Értékelés (Evaluation)
+Végül a teszt halmazon megvizsgáltuk a modellek teljesítményét. Nemcsak a pontosságot (Accuracy) néztük meg, hanem a precíziót, a visszahívást (recall) és az F1-pontszámot is mindkét osztályra, hogy megbizonyosodjunk arról, hogy a modell kiegyensúlyozottan ismeri fel a pozitív és a negatív véleményeket is.
+
+Eredmények (futtatás után töltsd ki a saját értékeiddel):
+- model_cv teszt pontosság: [ide jön]
+- model_tfidf teszt pontosság: [ide jön]
+- model_cv_hidden teszt pontosság: [ide jön]
+- Melyik modell a legjobb és miért: [ide jön]
+
+Korlátok és továbbfejlesztés
+- A címkék egy másik modelltől származnak, nem emberektől.
+- A semleges tweetek és az emojik kimaradtak, a szarkazmust pedig nehezen kezelik a szózsák alapú modellek.
+- Következő lépések: a semleges osztály megtartása (3 osztályos softmax kimenettel), bigramok használata, emojik kezelése.
